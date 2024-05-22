@@ -1,0 +1,35 @@
+version: '3.10'
+services:
+  web:
+    container_name: "fastapi"
+    build: ./
+    volumes:
+      - ./app:/app
+    ports:
+      - "8000:8000"
+    # environment:
+    #   - DEPLOYMENT_TYPE=production
+    # depends_on:
+    #   - mongo
+    # links:
+    #   - mongo
+    networks:
+      - face-auth-net
+
+  nginx:
+    container_name: "nginx"
+    restart: always
+    image: nginx
+    volumes:
+      - ./app/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - web
+    networks:
+      - face-auth-net
+
+networks:
+  face-auth-net:
+    driver: bridge

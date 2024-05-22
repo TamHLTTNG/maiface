@@ -2,13 +2,13 @@
 function copyFrame() {
     // Create canvas
     var canvas_capture_image = document.createElement('canvas');
-    canvas_capture_image.id = "captureImage"; 
+    canvas_capture_image.id = "captureImage";
     var va = document.getElementById("myVideo");
     let parentDiv = va.parentNode
     parentDiv.insertBefore(canvas_capture_image, va)
     var cci = canvas_capture_image.getContext("2d");
 
-    canvas_capture_image.width  = va.videoWidth;
+    canvas_capture_image.width = va.videoWidth;
     canvas_capture_image.height = va.videoHeight;
     cci.drawImage(va, 0, 0);
 }
@@ -18,7 +18,41 @@ function delFrame() {
 
     var canvas_capture_image = document.getElementById("captureImage");
     canvas_capture_image.parentNode.removeChild(canvas_capture_image);
-        
+
+}
+
+function setCookie(cname, cvalue, exdays) {
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    let expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+    let name = cname + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function checkCookie() {
+    let user = getCookie("username");
+    if (user != "") {
+        alert("Welcome again " + user);
+    } else {
+        user = prompt("Please enter your name:", "");
+        if (user != "" && user != null) {
+            setCookie("username", user, 365);
+        }
+    }
 }
 
 // canvas image to blob
@@ -30,8 +64,8 @@ function canvasToBlob(canvas, callback, type) {
         canvas.toBlob(callback, type);
     } else if (canvas.toDataURL && window.Uint8Array && window.Blob && window.atob) {
         var binStr = atob(canvas.toDataURL(type).replace(/^[^,]*,/, '')),
-        len = binStr.length,
-        arr = new Uint8Array(len);
+            len = binStr.length,
+            arr = new Uint8Array(len);
 
         for (var i = 0; i < len; i++) {
             arr[i] = binStr.charCodeAt(i);
@@ -94,10 +128,14 @@ document.getElementById('faceid_regist_form').addEventListener('submit', functio
     const captureImage = document.getElementById('captureImage');
     let groupSelect = document.getElementById('groupid');
     const groupid = groupSelect.options[groupSelect.selectedIndex].value;
-    
-    if(!userid) {
+    // const email = getCookie("email")
+    // const token = getCookie("token")
+    const email = localStorage.getItem("email")
+    const token = localStorage.getItem("token")
+
+    if (!userid) {
         alert("Enter user id");
-        event.stopPropagation(); 
+        event.stopPropagation();
         event.preventDefault();
     } else if (!groupid) {
         alert("Chose group id");

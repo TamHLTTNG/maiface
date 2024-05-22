@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request, File, UploadFile, Form
+import os
+from fastapi import FastAPI, Request, File, UploadFile, Form, requests
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
@@ -63,7 +64,8 @@ async def get_faceid_info(faceid: str):
 
 @app.post("/api/face_recognizer")
 async def api_face_recognizer(deviceid: str = Form(""),
-                              image: UploadFile = File(...)):
+                              image: UploadFile = File(...),
+                              email: str = Form("")):
     """
     Parameters
     ----------
@@ -74,6 +76,9 @@ async def api_face_recognizer(deviceid: str = Form(""),
     JSONResponse
     """
     try:
+        class Response:
+            email: str
+            face_recogn_list: any
         # Get the image
         image_data = await image.read()
         # Change image type from byteio to PIL
@@ -81,9 +86,13 @@ async def api_face_recognizer(deviceid: str = Form(""),
         # Serch faceid
         results = detector.face_search(img_pil, deviceid)
         # Convert to JSON
-        json_response = far.create_face_response(results)
+        json_results = far.create_face_response(results)
+        # call BE side
+        json_response = Response(email, json_results)
+        url = os.environ["SSO_SERVER_URL"] + '/login_biometric'
+        response = requests.post(url, data=json_response)
         
-        return JSONResponse(content=json_response)
+        return JSONResponse(content=response)
  
     except Exception as e:
         logger.error('POST /api/face_recognizer: %e' % e)
@@ -92,7 +101,9 @@ async def api_face_recognizer(deviceid: str = Form(""),
 @app.post("/api/face_register", response_model=ApiResponse)
 async def api_face_register(userid: str = Form(...),
                             groupid: str = Form(""),
-                            image: UploadFile = File(...)):
+                            image: UploadFile = File(...),
+                            email: str = Form(""),
+                            token: str = Form("")):
     """
     Create faceid.
     
@@ -113,6 +124,8 @@ async def api_face_register(userid: str = Form(...),
         res.userid = userid
         faceid = groupid + "-" + userid
         res.faceid = faceid
+        res.email = email
+        res.token = token
         
         # Check Argument
         if not far.isonlynum(userid):
@@ -132,6 +145,9 @@ async def api_face_register(userid: str = Form(...),
         
         # Return response
         if r_code == 1:
+            # Call BE and save Code for user
+            url = os.environ["SSO_SERVER_URL"] + '/register_biometric'
+            response = requests.post(url, data=res)
             return far.create_response(res, "S1001")
         else:
             return far.create_response(res, "E1002")

@@ -61,6 +61,8 @@ class ApiResponse(Message):
     groupid: Optional[str]
     userid: Optional[str]
     faceid: Optional[str]
+    email: str = ""
+    token: str = ""
 
 def create_response(response, mid):
     """
